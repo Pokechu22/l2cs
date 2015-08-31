@@ -163,6 +163,7 @@ class IntNodePlugin(PseudoFieldPlugin):
             except ValueError:
                 return None
         else:
+            node.set_fieldname(fieldname)
             return node
 
 
@@ -176,6 +177,7 @@ class YesNoPlugin(PseudoFieldPlugin):
             new_node.set_fieldname(fieldname)
             return new_node
         else:
+            node.set_fieldname(fieldname)
             return node
 
 
@@ -189,8 +191,7 @@ class FieldAliasPlugin(PseudoFieldPlugin):
         super(FieldAliasPlugin, self).__init__(self.aliases.keys())
     
     def modify_node(self, fieldname, node):
-        if node.has_text:
-            node.set_fieldname(self.aliases[fieldname])
+        node.set_fieldname(self.aliases[fieldname])
         return node
 
 
