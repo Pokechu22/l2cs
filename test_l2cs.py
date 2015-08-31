@@ -141,6 +141,20 @@ class l2csTester(unittest.TestCase):
         result = l2cs.convert(u'foo:\u0ca0_\u0ca0', self.parser)
         self.assertIsInstance(result, unicode)
     
+    # Numeric ranges
+    def test_range1(self):
+        self._run_test(u"number:[0 TO 20]", u"number:0..20", self.schema_parser)
+    
+    # Dates
+    def test_date1(self):
+        self._run_test(u"date:1970", u"date:0..31535999", self.schema_parser)
+    
+    def test_date2(self):
+        self._run_test(u"date:201002", u"date:1264982400..1267401599", self.schema_parser)
+    
+    def test_date3(self):
+        self._run_test(u"date:'Sept 2 2012 to sept 3 2012 5:13 PM'", u"date:1346544000..1346692439", self.schema_parser)
+    
     ### Test cases from resolved issues ###
     # The remaining test cases protect against issues that have been resolved
     
