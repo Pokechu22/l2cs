@@ -12,6 +12,7 @@ import sys
 import whoosh.analysis
 import whoosh.fields
 import whoosh.qparser.default
+import whoosh.qparser.dateparse
 import whoosh.qparser.plugins
 import whoosh.qparser.syntax
 import whoosh.qparser.taggers
@@ -62,6 +63,29 @@ def build_field(clause):
         yield clause.fieldname
         yield ':'
         yield clause.text
+
+
+@handler(whoosh.query.ranges.TermRange, whoosh.query.ranges.NumericRange,
+         whoosh.query.ranges.DateRange)
+def build_range(clause):
+    def datetime_to_epoch_seconds(datetime):
+        td = datetime - datetime.utcfromtimestamp(0) # The epoch
+        total = td.days * 86400  # Seconds in a day
+        total += td.seconds
+        return total
+
+    if isinstance(clause, whoosh.query.ranges.DateRange):
+        start = datetime_to_epoch_seconds(clause.startdate)
+        end = datetime_to_epoch_seconds(clause.enddate)
+    else:
+        start = clause.start
+        end = clause.end
+
+    yield clause.fieldname
+    yield ":"
+    yield str(start)
+    yield ".."
+    yield str(end)
 
 
 @handler(whoosh.query.And, whoosh.query.Or, whoosh.query.Not,
@@ -221,12 +245,14 @@ class MinusPlugin(whoosh.qparser.plugins.Plugin):
 
 
 DEFAULT_PLUGINS = (
+                   whoosh.qparser.dateparse.DateParserPlugin(),
                    whoosh.qparser.plugins.WhitespacePlugin(),
                    whoosh.qparser.plugins.SingleQuotePlugin(),
                    whoosh.qparser.plugins.FieldsPlugin(),
                    whoosh.qparser.plugins.PhrasePlugin(),
                    whoosh.qparser.plugins.PrefixPlugin(),
                    whoosh.qparser.plugins.GroupPlugin(),
+                   whoosh.qparser.plugins.RangePlugin(),
                    whoosh.qparser.plugins.OperatorsPlugin(AndMaybe=None,
                                                           Require=None),
                    whoosh.qparser.plugins.EveryPlugin(),
@@ -304,7 +330,7 @@ def __sample_parser(schema=None):
 def __sample_schema():
     return make_schema(["foo", "bar", "baz", "count", "number", "active",
                         "text", "ready", "active", "alias", "alias1",
-                        "alias2"])
+                        "alias2"], ["timestamp", "date"])
 
 
 def main(args):
